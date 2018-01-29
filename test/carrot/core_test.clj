@@ -63,7 +63,7 @@
       (carrot/subscribe channel
                         carrot-system
                         qname
-                        (carrot/crate-message-handler-function
+                        (carrot/create-message-handler-function
                          msg-handler
                          qname
                          carrot-system
@@ -112,7 +112,7 @@
       (carrot/subscribe channel
                         carrot-system
                         qname
-                        (carrot/crate-message-handler-function
+                        (carrot/create-message-handler-function
                          msg-handler
                          qname
                          carrot-system
