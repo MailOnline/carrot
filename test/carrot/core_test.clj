@@ -17,7 +17,7 @@
            java.util.concurrent.TimeUnit))
 (def carrot-system {})
 
-(deftest destroy
+(deftest ^:integration destroy
   (with-open [conn (lhc/connect)
               channel (lch/open conn)]
     (carrot/destroy-system channel carrot-system '("message-queue"))))
@@ -32,7 +32,7 @@
   {:arguments {"x-max-length" 1000}})
 
 
-(deftest test-retry-with-carrot
+(deftest ^:integration test-retry-with-carrot
   (with-open [conn (lhc/connect)
               channel (lch/open conn)]
     (let [qname "message-queue"
@@ -79,7 +79,7 @@
 
 
 
-(deftest test-expo-retry-with-carrot
+(deftest ^:integration test-expo-retry-with-carrot
   (with-open [conn (lhc/connect)
               channel (lch/open conn)]
     (let [qname "message-queue"

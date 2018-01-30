@@ -11,7 +11,6 @@
                  ;; rabbitmq client
                  [com.novemberain/langohr "3.6.1"]
 
-
                  ;; logging
                  [org.clojure/tools.logging "0.3.1"]
                  [org.slf4j/slf4j-api "1.7.21"]
@@ -19,6 +18,10 @@
                  [ch.qos.logback/logback-access "1.1.7"]
                  [ch.qos.logback/logback-core "1.1.7"]
 
-
                  ;; errors
-                 [dire "0.5.4"]])
+                 [dire "0.5.4"]]
+
+  :aliases {"test" ["test" ":default"]
+            "integration" ["test" ":integration"]}
+  :test-selectors {:default (fn [m] (not (or (:integration m) (:regression m))))
+                   :integration :integration})
