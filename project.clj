@@ -3,10 +3,6 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :deploy-repositories [["clojars" {:url "https://clojars.org/repo"
-                                     :sign-releases false
-                                     ;;:signing {:gpg-key "0xAB123456"}
-                                    }]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  ;; rabbitmq client
                  [com.novemberain/langohr "3.6.1"]
