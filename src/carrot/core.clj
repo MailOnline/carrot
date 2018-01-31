@@ -7,12 +7,17 @@
             [carrot.exp-backoff :as exp-backoff]
             [carrot.delayed-retry :as delayed-retry]))
 
+(def ^:private log-ns "carrot.core")
+
 (defn- retry-exception?
   "returns true if the exception has to be retried, false otherwise"
-  [exception logger-fn]
+  [exception logger-fn message-id]
   (let [reject? (:reject? (ex-data exception))] ;; reject? = don't retry
     (when (and logger-fn reject?)
-       (logger-fn "METRIC ns=carrot.core name=rejecting-exception exception=" exception))
+      (logger-fn {:type :metric
+                  :log-ns log-ns
+                  :txid message-id
+                  :name "rejectingRetry"}))
     (not reject?)))
 
 (defn- add-exception-data
@@ -24,7 +29,6 @@
            (-> (or (ex-data e) {})
                (merge d))))
 
-
 (defn- throw-with-extra!
   "given a function f attaches an error handler
   that will catch all exceptions and rethrow them with added data {:reject? true}"
@@ -33,7 +37,6 @@
     Exception
     (fn [e & args]
       (throw (add-exception-data e extra)))))
-
 
 (defn do-not-retry!
   "attach a supervisor that will not retry the functions in fn-coll"
@@ -44,16 +47,10 @@
   (throw (ex-info msg
                   (assoc meta :reject? true ))))
 
-
-
-
 (defn- nack [ch message meta routing-key retry-attempts carrot-system logger-fn]
   (if (= :exp-backoff (get-in carrot-system [:retry-config :strategy]))
     (exp-backoff/nack ch message meta routing-key retry-attempts carrot-system logger-fn)
     (delayed-retry/nack ch message meta routing-key retry-attempts carrot-system logger-fn)))
-
-
-
 
 (defn- message-handler [message-handler routing-key carrot-system logger-fn ch meta ^bytes payload]
   (try
@@ -63,16 +60,19 @@
       (-> carrot-map
           message-handler)
       (lb/ack ch (:delivery-tag meta))
-      (when logger-fn (logger-fn "LOGME ns=carrot.core name=message-processed message-id=" (:message-id meta))))
+      (when logger-fn
+        (logger-fn {:type :ack :log-ns log-ns :txid (:message-id meta)})))
     (catch Exception e
       (when logger-fn
-        (logger-fn "LOGME ns=carrot.core name=message-process-error message-id="(:message-id meta) "error="e " exception="(clojure.stacktrace/print-stack-trace e)))
-      (if (retry-exception? e logger-fn)
+        (logger-fn {:type :error
+                    :log-ns log-ns
+                    :txid (:message-id meta)
+                    :exception e}))
+      (if (retry-exception? e logger-fn (:message-id meta))
         (nack ch payload meta routing-key (or (get (:headers meta) "retry-attempts") 0) carrot-system logger-fn)
         (lb/ack ch (:delivery-tag meta))))))
 
-
-(defn crate-message-handler-function
+(defn create-message-handler-function
   "Creates message-handler function. Parameters:
   handler: function with your business logoc handling th eincoming message. Input config contains channel, meta and payload
   routing-key: routing key of the message
@@ -81,9 +81,7 @@
   ([handler routing-key carrot-system logger-fn]
    (partial message-handler handler routing-key carrot-system logger-fn))
   ([handler routing-key carrot-system]
-   (crate-message-handler-function message-handler handler routing-key carrot-system nil)))
-
-
+   (create-message-handler-function message-handler handler routing-key carrot-system nil)))
 
 (defn declare-system
   "declares carrot system based on the given connection and config"
@@ -104,7 +102,6 @@
   (le/delete channel retry-exchange)
   (le/delete channel dead-letter-exchange)
   (le/delete channel message-exchange))
-
 
 (defn subscribe
   "Subscribe for a message having a retry mechanism provided by carrot"

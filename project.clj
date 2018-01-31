@@ -1,16 +1,11 @@
-(defproject carrot "2.0.0"
+(defproject carrot "2.0.1-SNAPSHOT"
   :description "A Clojure library designed to providing the implementation of  RabbitMq delayed retry mechanism."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :deploy-repositories [["clojars" {:url "https://clojars.org/repo"
-                                     :sign-releases false
-                                     ;;:signing {:gpg-key "0xAB123456"}
-                                    }]]
   :dependencies [[org.clojure/clojure "1.8.0"]
                  ;; rabbitmq client
                  [com.novemberain/langohr "3.6.1"]
-
 
                  ;; logging
                  [org.clojure/tools.logging "0.3.1"]
@@ -19,6 +14,10 @@
                  [ch.qos.logback/logback-access "1.1.7"]
                  [ch.qos.logback/logback-core "1.1.7"]
 
-
                  ;; errors
-                 [dire "0.5.4"]])
+                 [dire "0.5.4"]]
+
+  :aliases {"test" ["test" ":default"]
+            "integration" ["test" ":integration"]}
+  :test-selectors {:default (fn [m] (not (or (:integration m) (:regression m))))
+                   :integration :integration})

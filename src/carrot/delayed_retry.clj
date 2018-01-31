@@ -10,8 +10,13 @@
   (let [max-retry (:max-retry-count retry-config)
         retry-attempts (int retry-attempts)
         exchange (if (> max-retry retry-attempts) retry-exchange dead-letter-exchange)]
-    (when logger-fn (logger-fn "LOGME ns=carrot.core name=current-retry-attempt delayed-retry message:" (:message-id meta) retry-attempts))
-    (when logger-fn (logger-fn "Sending message " (:message-id meta)  " to the exchange: " exchange))
+    (when logger-fn
+      (logger-fn {:type :metric
+                  :log-ns "carrot.core"
+                  :txid (:message-id meta)
+                  :name "nack"
+                  :params {:retry-attempts retry-attempts
+                           :exchange exchange}}))
     (lb/publish ch
                 exchange
                 routing-key
